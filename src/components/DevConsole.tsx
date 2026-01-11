@@ -32,10 +32,11 @@ export const DevConsole = ({ logs, isOpen, onToggle }: DevConsoleProps) => {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {/* Toggle Button */}
-      <div className="flex items-center gap-3 mb-2 justify-end">
-        <Label htmlFor="dev-console" className="text-sm text-muted-foreground flex items-center gap-2">
-          <Terminal className="h-4 w-4" />
-          Under the Hood
+      <div className="flex items-center gap-2 sm:gap-3 mb-2 justify-end">
+        <Label htmlFor="dev-console" className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 sm:gap-2">
+          <Terminal className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline">Under the Hood</span>
+          <span className="sm:hidden">Logs</span>
         </Label>
         <Switch
           id="dev-console"
@@ -52,30 +53,30 @@ export const DevConsole = ({ logs, isOpen, onToggle }: DevConsoleProps) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="w-[400px] max-w-[90vw] rounded-lg border border-border bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden"
+            className="w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] rounded-lg border border-border bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/30">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-border bg-secondary/30">
               <div className="flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                <div className="flex gap-1 sm:gap-1.5">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-500/80" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-500/80" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500/80" />
                 </div>
-                <span className="text-xs text-muted-foreground ml-2">lazorkit-session.log</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 sm:ml-2">lazorkit-session.log</span>
               </div>
               <motion.div
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </motion.div>
             </div>
 
             {/* Logs */}
             <div
               ref={scrollRef}
-              className="h-[200px] overflow-y-auto p-3 font-mono text-xs space-y-1"
+              className="h-[150px] sm:h-[200px] overflow-y-auto p-2 sm:p-3 font-mono text-[10px] sm:text-xs space-y-1"
             >
               {logs.length === 0 ? (
                 <div className="text-muted-foreground italic">
@@ -87,7 +88,7 @@ export const DevConsole = ({ logs, isOpen, onToggle }: DevConsoleProps) => {
                     key={i}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className={`${getLogColor(log)} leading-relaxed`}
+                    className={`${getLogColor(log)} leading-relaxed break-all`}
                   >
                     {log}
                   </motion.div>
@@ -96,11 +97,11 @@ export const DevConsole = ({ logs, isOpen, onToggle }: DevConsoleProps) => {
             </div>
 
             {/* Status Bar */}
-            <div className="px-3 py-2 border-t border-border bg-secondary/20 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="px-2 sm:px-3 py-1.5 sm:py-2 border-t border-border bg-secondary/20 flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
               <span>Devnet • Gasless Mode</span>
               <span className="flex items-center gap-1">
                 <motion.div
-                  className="w-2 h-2 rounded-full bg-primary"
+                  className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary"
                   animate={{ opacity: [1, 0.5, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 />

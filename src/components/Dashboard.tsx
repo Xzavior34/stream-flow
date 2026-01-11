@@ -6,6 +6,7 @@ import { CreatorCard } from './CreatorCard';
 import { StreamCounter } from './StreamCounter';
 import { DevConsole } from './DevConsole';
 import { useStreamSubscription } from '@/hooks/useStreamSubscription';
+import { triggerMoneyRain } from '@/lib/confetti';
 import { Loader2, TrendingUp } from 'lucide-react';
 
 interface Creator {
@@ -92,10 +93,14 @@ export const Dashboard = ({
       addLog('session');
       setTimeout(() => addLog('paymaster'), 300);
       setTimeout(() => addLog('tx'), 600);
+      // Trigger money rain for first subscription
+      if (subscriptions.length === 0) {
+        setTimeout(() => triggerMoneyRain(), 500);
+      }
     } catch (error) {
       console.error('Subscribe error:', error);
     }
-  }, [subscribe, addLog]);
+  }, [subscribe, addLog, subscriptions.length]);
 
   const handleUnsubscribe = useCallback(async (creatorId: string) => {
     try {
@@ -108,11 +113,11 @@ export const Dashboard = ({
   const activeCount = subscriptions.length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 sm:pb-8">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
             <span className="text-neon">Stream</span>
             <span className="text-foreground">.fun</span>
           </h1>
@@ -134,10 +139,10 @@ export const Dashboard = ({
           animate={{ opacity: 1, y: 0 }}
           className="border-b border-border/30 bg-secondary/10"
         >
-          <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-center gap-6">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <span className="text-muted-foreground">Total Streaming:</span>
+          <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex flex-col items-center justify-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <span className="text-sm sm:text-base text-muted-foreground">Total Streaming:</span>
             </div>
             <StreamCounter
               amount={totalStreaming}
@@ -146,7 +151,7 @@ export const Dashboard = ({
               size="lg"
               showLabel={false}
             />
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               to {activeCount} creator{activeCount !== 1 ? 's' : ''}
             </div>
           </div>
@@ -154,10 +159,10 @@ export const Dashboard = ({
       )}
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-2">Discover Creators</h2>
-          <p className="text-muted-foreground">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-1 sm:mb-2">Discover Creators</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Stream micro-payments in real-time. No transactions to sign.
           </p>
         </div>
@@ -167,7 +172,7 @@ export const Dashboard = ({
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {creators.map((creator, index) => (
               <motion.div
                 key={creator.id}
