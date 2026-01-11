@@ -1,13 +1,32 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useLazorWallet } from '@/hooks/useLazorWallet';
+import { LandingHero } from '@/components/LandingHero';
+import { Dashboard } from '@/components/Dashboard';
 
 const Index = () => {
+  const {
+    isConnected,
+    isConnecting,
+    address,
+    connect,
+    disconnect,
+    logs,
+    addLog,
+  } = useLazorWallet();
+
+  if (!isConnected) {
+    return <LandingHero onConnect={connect} isConnecting={isConnecting} />;
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <Dashboard
+      walletAddress={address || ''}
+      isConnected={isConnected}
+      isConnecting={isConnecting}
+      onConnect={connect}
+      onDisconnect={disconnect}
+      logs={logs}
+      addLog={addLog}
+    />
   );
 };
 
