@@ -7,7 +7,7 @@ import { StreamCounter } from './StreamCounter';
 import { DevConsole } from './DevConsole';
 import { useStreamSubscription } from '@/hooks/useStreamSubscription';
 import { triggerMoneyRain } from '@/lib/confetti';
-import { Loader2, TrendingUp } from 'lucide-react';
+import { Loader2, TrendingUp, Sparkles } from 'lucide-react';
 
 interface Creator {
   id: string;
@@ -82,7 +82,7 @@ export const Dashboard = ({
       const logTypes: ('session' | 'tx')[] = ['session', 'tx'];
       const randomType = logTypes[Math.floor(Math.random() * logTypes.length)];
       addLog(randomType);
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [subscriptions.length, addLog]);
@@ -111,16 +111,21 @@ export const Dashboard = ({
   }, [unsubscribe]);
 
   const activeCount = subscriptions.length;
+  const totalFlowRate = subscriptions.reduce((sum, s) => sum + s.flow_rate, 0);
 
   return (
-    <div className="min-h-screen bg-background pb-20 sm:pb-8">
+    <div className="min-h-screen bg-background pb-32 sm:pb-8">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+      <header className="sticky top-0 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
+          <motion.h1 
+            className="text-xl sm:text-2xl font-bold tracking-tight"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
             <span className="text-neon">Stream</span>
             <span className="text-foreground">.fun</span>
-          </h1>
+          </motion.h1>
           
           <WalletButton
             isConnected={isConnected}
@@ -132,40 +137,78 @@ export const Dashboard = ({
         </div>
       </header>
 
-      {/* Stats Bar */}
+      {/* Hero Stats Section - Only when streaming */}
       {activeCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
+        <motion.section
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="border-b border-border/30 bg-secondary/10"
+          className="relative border-b border-border/20 bg-gradient-to-b from-primary/5 to-transparent"
         >
-          <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex flex-col items-center justify-center gap-3 sm:gap-6">
-            <div className="flex items-center gap-2 sm:gap-3">
+          {/* Background Effect */}
+          <div className="absolute inset-0 overflow-hidden">
+            <motion.div
+              className="absolute inset-0"
+              style={{
+                background: 'radial-gradient(ellipse at center top, hsl(152 100% 50% / 0.08) 0%, transparent 50%)',
+              }}
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+          </div>
+
+          <div className="container mx-auto px-4 py-8 sm:py-12 flex flex-col items-center justify-center gap-4 sm:gap-6 relative">
+            {/* Label */}
+            <motion.div 
+              className="flex items-center gap-2 text-sm sm:text-base text-muted-foreground"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
               <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <span className="text-sm sm:text-base text-muted-foreground">Total Streaming:</span>
-            </div>
+              <span>Total Streaming to {activeCount} Creator{activeCount !== 1 ? 's' : ''}</span>
+            </motion.div>
+
+            {/* The Main Counter - THE WOW FACTOR */}
             <StreamCounter
               amount={totalStreaming}
-              flowRate={subscriptions.reduce((sum, s) => sum + s.flow_rate, 0)}
+              flowRate={totalFlowRate}
               isActive={true}
-              size="lg"
-              showLabel={false}
+              size="hero"
+              showLabel={true}
             />
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              to {activeCount} creator{activeCount !== 1 ? 's' : ''}
-            </div>
+
+            {/* Magic Indicator */}
+            <motion.div
+              className="flex items-center gap-2 text-xs sm:text-sm text-primary/80"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="font-medium">Session Key Auto-Signing</span>
+              <span className="text-muted-foreground">• No transactions to approve</span>
+            </motion.div>
           </div>
-        </motion.div>
+        </motion.section>
       )}
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl font-semibold mb-1 sm:mb-2">Discover Creators</h2>
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <motion.div 
+          className="mb-6 sm:mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h2 className="text-xl sm:text-2xl font-semibold mb-1 sm:mb-2">
+            {activeCount > 0 ? 'Your Creators' : 'Discover Creators'}
+          </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Stream micro-payments in real-time. No transactions to sign.
+            {activeCount > 0 
+              ? 'Manage your real-time payment streams'
+              : 'Stream micro-payments in real-time. No transactions to sign.'
+            }
           </p>
-        </div>
+        </motion.div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -178,7 +221,7 @@ export const Dashboard = ({
                 key={creator.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.08 }}
               >
                 <CreatorCard
                   creator={creator}
