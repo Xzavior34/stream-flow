@@ -27,6 +27,11 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
   });
   const [logs, setLogs] = useState<string[]>([]);
 
+  const addLog = useCallback((type: 'connect' | 'policy' | 'paymaster' | 'session' | 'tx') => {
+    const log = generateMockLog(type);
+    setLogs(prev => [...prev.slice(-50), log]);
+  }, []);
+
   // Check for existing session on mount
   useEffect(() => {
     const savedWallet = localStorage.getItem(WALLET_STORAGE_KEY);
@@ -44,35 +49,34 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
         localStorage.removeItem(WALLET_STORAGE_KEY);
       }
     }
-  }, []);
-
-  const addLog = useCallback((type: 'connect' | 'policy' | 'paymaster' | 'session' | 'tx') => {
-    const log = generateMockLog(type);
-    setLogs(prev => [...prev.slice(-50), log]); // Keep last 50 logs
-  }, []);
+  }, [addLog]);
 
   const connect = useCallback(async () => {
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
     
     try {
-      // Dynamically import LazorKit to avoid SSR issues
-      const { LazorWallet } = await import('@lazorkit/wallet');
+      // Dynamically import LazorKit store - it uses Zustand internally
+      const { useWalletStore } = await import('@lazorkit/wallet');
       
-      // Initialize LazorKit with devnet config
-      const lazor = new LazorWallet({
-        rpcUrl: LAZOR_CONFIG.rpcUrl,
+      // Get the store's connect function
+      const store = useWalletStore.getState();
+      
+      // Update config before connecting
+      store.setConfig({
         portalUrl: LAZOR_CONFIG.portalUrl,
-        paymasterUrl: LAZOR_CONFIG.paymasterUrl,
+        paymasterConfig: {
+          paymasterUrl: LAZOR_CONFIG.paymasterUrl,
+        },
+        rpcUrl: LAZOR_CONFIG.rpcUrl,
       });
 
       // Attempt passkey connection with paymaster for gasless
-      const result = await lazor.connect({ 
+      const walletInfo = await store.connect({ 
         feeMode: "paymaster",
-        rpId: LAZOR_CONFIG.rpId,
       });
 
-      if (result?.smartWalletAddress) {
-        const address = result.smartWalletAddress;
+      if (walletInfo?.smartWallet) {
+        const address = walletInfo.smartWallet;
         
         // Persist to localStorage
         localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify({ address }));
