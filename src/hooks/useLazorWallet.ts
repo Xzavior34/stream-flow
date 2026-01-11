@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { LAZOR_CONFIG, generateMockLog } from '@/lib/lazor-config';
+import { LAZOR_CONFIG, generateMockLog, generateMockWalletAddress } from '@/lib/lazor-config';
 
 interface LazorWalletState {
   isConnected: boolean;
@@ -54,67 +54,26 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
   const connect = useCallback(async () => {
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
     
-    try {
-      // Dynamically import LazorKit store - it uses Zustand internally
-      const { useWalletStore } = await import('@lazorkit/wallet');
-      
-      // Get the store's connect function
-      const store = useWalletStore.getState();
-      
-      // Update config before connecting
-      store.setConfig({
-        portalUrl: LAZOR_CONFIG.portalUrl,
-        paymasterConfig: {
-          paymasterUrl: LAZOR_CONFIG.paymasterUrl,
-        },
-        rpcUrl: LAZOR_CONFIG.rpcUrl,
-      });
-
-      // Attempt passkey connection with paymaster for gasless
-      const walletInfo = await store.connect({ 
-        feeMode: "paymaster",
-      });
-
-      if (walletInfo?.smartWallet) {
-        const address = walletInfo.smartWallet;
-        
-        // Persist to localStorage
-        localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify({ address }));
-        
-        setState({
-          isConnected: true,
-          isConnecting: false,
-          address,
-          error: null,
-        });
-        
-        // Add connection logs
-        addLog('connect');
-        setTimeout(() => addLog('policy'), 500);
-        setTimeout(() => addLog('paymaster'), 1000);
-      } else {
-        throw new Error('No wallet address returned');
-      }
-    } catch (error) {
-      console.error('LazorKit connection error:', error);
-      
-      // For demo purposes, create a mock wallet if real connection fails
-      // This allows the demo to work even without HTTPS
-      const mockAddress = `DEMO${Math.random().toString(36).slice(2, 8).toUpperCase()}...${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-      
-      localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify({ address: mockAddress, isMock: true }));
-      
-      setState({
-        isConnected: true,
-        isConnecting: false,
-        address: mockAddress,
-        error: null,
-      });
-      
-      addLog('connect');
-      setTimeout(() => addLog('policy'), 500);
-      setTimeout(() => addLog('paymaster'), 1000);
-    }
+    // Simulate passkey authentication delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Generate a mock Solana-style wallet address
+    const mockAddress = generateMockWalletAddress();
+    
+    // Persist to localStorage
+    localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify({ address: mockAddress }));
+    
+    setState({
+      isConnected: true,
+      isConnecting: false,
+      address: mockAddress,
+      error: null,
+    });
+    
+    // Add connection logs with realistic timing
+    addLog('connect');
+    setTimeout(() => addLog('policy'), 500);
+    setTimeout(() => addLog('paymaster'), 1000);
   }, [addLog]);
 
   const disconnect = useCallback(() => {
