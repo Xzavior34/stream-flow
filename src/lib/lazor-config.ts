@@ -10,6 +10,18 @@ export const LAZOR_CONFIG = {
   rpId: null as null,
 };
 
+// Generate a realistic Solana wallet address (Base58 format, 32-44 chars)
+export const generateMockWalletAddress = (): string => {
+  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let address = '';
+  // Solana addresses are typically 32-44 characters
+  const length = 43 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < length; i++) {
+    address += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return address;
+};
+
 // Generate unique IDs for mock transactions
 const generateTxId = (): string => {
   const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';

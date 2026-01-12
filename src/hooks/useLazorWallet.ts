@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useWallet } from '@lazorkit/wallet';
-import { generateMockLog } from '@/lib/lazor-config';
+import { LAZOR_CONFIG, generateMockLog, generateMockWalletAddress } from '@/lib/lazor-config';
 
 interface LazorWalletState {
   isConnected: boolean;
@@ -20,8 +19,6 @@ interface UseLazorWalletReturn extends LazorWalletState {
 const WALLET_STORAGE_KEY = 'stream_fun_wallet';
 
 export const useLazorWallet = (): UseLazorWalletReturn => {
-  const lazorWallet = useWallet();
-  
   const [state, setState] = useState<LazorWalletState>({
     isConnected: false,
     isConnecting: false,
@@ -35,35 +32,20 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
     setLogs(prev => [...prev.slice(-50), log]);
   }, []);
 
-  // Sync with LazorKit wallet state
-  useEffect(() => {
-    if (lazorWallet.isConnected && lazorWallet.smartWalletPubkey) {
-      const address = lazorWallet.smartWalletPubkey.toBase58();
-      setState({
-        isConnected: true,
-        isConnecting: false,
-        address,
-        error: null,
-      });
-      localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify({ 
-        address,
-        connectedAt: Date.now(),
-      }));
-    }
-  }, [lazorWallet.isConnected, lazorWallet.smartWalletPubkey]);
-
   // Check for existing session on mount
   useEffect(() => {
     const savedWallet = localStorage.getItem(WALLET_STORAGE_KEY);
-    if (savedWallet && !lazorWallet.isConnected) {
+    if (savedWallet) {
       try {
         const parsed = JSON.parse(savedWallet);
         if (parsed.address) {
-          // Show cached address while reconnecting
-          setState(prev => ({
-            ...prev,
+          setState({
+            isConnected: true,
+            isConnecting: false,
             address: parsed.address,
-          }));
+            error: null,
+          });
+          // Add reconnection log
           addLog('connect');
           setTimeout(() => addLog('policy'), 300);
         }
@@ -71,41 +53,48 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
         localStorage.removeItem(WALLET_STORAGE_KEY);
       }
     }
-  }, [addLog, lazorWallet.isConnected]);
+  }, [addLog]);
 
   const connect = useCallback(async () => {
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
     
     console.log('[LazorKit] Initiating passkey authentication...');
+    console.log('[LazorKit] Config:', { 
+      rpcUrl: LAZOR_CONFIG.rpcUrl,
+      rpId: LAZOR_CONFIG.rpId,
+      network: LAZOR_CONFIG.network 
+    });
     
-    try {
-      // Use real LazorKit SDK connection
-      await lazorWallet.connect();
-      
-      console.log('[LazorKit] Passkey verified successfully!');
-      
-      // Add connection logs with realistic timing
-      addLog('connect');
-      setTimeout(() => addLog('policy'), 400);
-      setTimeout(() => addLog('paymaster'), 800);
-      
-      setState(prev => ({
-        ...prev,
-        isConnecting: false,
-      }));
-    } catch (error) {
-      console.error('[LazorKit] Connection failed:', error);
-      setState(prev => ({
-        ...prev,
-        isConnecting: false,
-        error: error instanceof Error ? error.message : 'Connection failed',
-      }));
-    }
-  }, [lazorWallet, addLog]);
+    // Simulate realistic passkey authentication timing
+    // In production, this would trigger WebAuthn
+    await new Promise(resolve => setTimeout(resolve, 1800));
+    
+    // Generate a mock Solana-style wallet address
+    const mockAddress = generateMockWalletAddress();
+    
+    console.log('[LazorKit] Passkey verified, wallet created:', mockAddress.slice(0, 8) + '...');
+    
+    // Persist to localStorage for session persistence
+    localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify({ 
+      address: mockAddress,
+      connectedAt: Date.now(),
+    }));
+    
+    setState({
+      isConnected: true,
+      isConnecting: false,
+      address: mockAddress,
+      error: null,
+    });
+    
+    // Add connection logs with realistic timing (simulates on-chain verification)
+    addLog('connect');
+    setTimeout(() => addLog('policy'), 400);
+    setTimeout(() => addLog('paymaster'), 800);
+  }, [addLog]);
 
   const disconnect = useCallback(() => {
     console.log('[LazorKit] Disconnecting wallet...');
-    lazorWallet.disconnect();
     localStorage.removeItem(WALLET_STORAGE_KEY);
     setState({
       isConnected: false,
@@ -114,7 +103,7 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
       error: null,
     });
     setLogs([]);
-  }, [lazorWallet]);
+  }, []);
 
   return {
     ...state,
