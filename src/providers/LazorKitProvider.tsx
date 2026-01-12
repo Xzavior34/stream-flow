@@ -1,44 +1,20 @@
 /**
  * @fileoverview LazorKit Context Provider
  * @description Provides wallet state and authentication methods to the entire application.
- * This provider wraps the app and makes LazorKit wallet functionality available via React context.
- * 
- * @example
- * ```tsx
- * // In App.tsx
- * import { LazorKitProvider } from '@/providers/LazorKitProvider';
- * 
- * function App() {
- *   return (
- *     <LazorKitProvider>
- *       <YourApp />
- *     </LazorKitProvider>
- *   );
- * }
- * 
- * // In any component
- * import { useLazorKit } from '@/providers/LazorKitProvider';
- * 
- * function MyComponent() {
- *   const { isConnected, address, connect, disconnect } = useLazorKit();
- *   // ...
- * }
- * ```
  */
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useLazorAuth, LazorAuthState } from '@/hooks/useLazorAuth';
 import { useSessionLogs, SessionLog } from '@/hooks/useSessionLogs';
+// 1. Import the official SDK Provider
+import { LazorkitProvider } from '@lazorkit/wallet'; 
 
 /**
  * Shape of the LazorKit context value
  */
 interface LazorKitContextValue extends LazorAuthState {
-  /** Session activity logs for dev console */
   logs: string[];
-  /** Add a new log entry */
   addLog: (type: SessionLog) => void;
-  /** Clear all logs */
   clearLogs: () => void;
 }
 
@@ -48,23 +24,14 @@ interface LazorKitProviderProps {
   children: ReactNode;
 }
 
+// Helper to safely get the RP ID (Domain) for Vercel vs Localhost
+const getRpId = () => {
+  if (typeof window === 'undefined') return 'localhost';
+  return window.location.hostname; 
+};
+
 /**
  * LazorKit Context Provider Component
- * 
- * @description
- * Wraps the application and provides:
- * - Wallet connection state (isConnected, address, isConnecting)
- * - Authentication methods (connect, disconnect)
- * - Session logging for the developer console
- * 
- * @param props.children - Child components to wrap
- * 
- * @example
- * ```tsx
- * <LazorKitProvider>
- *   <App />
- * </LazorKitProvider>
- * ```
  */
 export const LazorKitProvider: React.FC<LazorKitProviderProps> = ({ children }) => {
   const { logs, addLog, clearLogs } = useSessionLogs();
@@ -78,30 +45,27 @@ export const LazorKitProvider: React.FC<LazorKitProviderProps> = ({ children }) 
   };
 
   return (
-    <LazorKitContext.Provider value={value}>
-      {children}
-    </LazorKitContext.Provider>
+    // 2. Initialize the SDK here. This fixes "Missing params".
+    <LazorkitProvider
+      appName="Stream.fun"      // ⚠️ Required param
+      chainId={103}             // ⚠️ Required param (103 = Devnet)
+      rpcUrl={import.meta.env.VITE_RPC_URL || "https://api.devnet.solana.com"}
+      portalUrl={import.meta.env.VITE_PORTAL_URL || "https://portal.lazor.sh"}
+      rpId={getRpId()}          // ⚠️ Binds Passkey to Vercel URL
+      configPaymaster={{
+        paymasterUrl: "https://kora.devnet.lazorkit.com",
+      }}
+    >
+      {/* Your custom context lives inside the SDK */}
+      <LazorKitContext.Provider value={value}>
+        {children}
+      </LazorKitContext.Provider>
+    </LazorkitProvider>
   );
 };
 
 /**
  * Hook to access LazorKit wallet context
- * 
- * @throws {Error} If used outside of LazorKitProvider
- * @returns LazorKit context value with auth state and methods
- * 
- * @example
- * ```tsx
- * function WalletStatus() {
- *   const { isConnected, address, connect, disconnect } = useLazorKit();
- *   
- *   if (isConnected) {
- *     return <button onClick={disconnect}>Disconnect {address}</button>;
- *   }
- *   
- *   return <button onClick={connect}>Connect Wallet</button>;
- * }
- * ```
  */
 export const useLazorKit = (): LazorKitContextValue => {
   const context = useContext(LazorKitContext);
