@@ -1,73 +1,161 @@
-# Welcome to your Lovable project
+To secure the **$700 prize**, your README needs to stand out. Instead of a boring technical list, we will structure it as a **"Developer's Handbook"**—a narrative guide that walks the judges through the *why*, the *how*, and the *magic* of your integration.
 
-## Project info
+This format proves you didn't just copy code; you engineered a solution.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+# 📘 Stream.fun: The Developer's Handbook
 
-There are several ways of editing your application.
+> **A Reference Implementation for Next-Gen Solana Payments**
 
-**Use Lovable**
+## 📜 Prologue: The Friction Problem
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+In the current Web3 landscape, supporting a creator usually requires:
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Downloading a wallet extension.
+2. Writing down a 12-word seed phrase.
+3. Buying SOL for gas fees.
+4. Signing a confusing pop-up.
 
-**Use your preferred IDE**
+**Stream.fun** eliminates every single one of these steps. By leveraging the **LazorKit SDK**, we turn the donation process into a single, biometric tap—indistinguishable from a Web2 experience, but powered by the Solana blockchain.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📖 Chapter 1: The Architecture
 
-Follow these steps:
+Stream.fun is not just a UI; it is a specialized integration of three core layers.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 1. The Identity Layer (Biometric Passkeys)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Instead of a private key stored in local storage (insecure) or a wallet extension (friction), we use **WebAuthn**.
 
-# Step 3: Install the necessary dependencies.
-npm i
+* **Mechanism:** The user's FaceID or Fingerprint generates a secure signature.
+* **Result:** No seed phrases. No "Connect Wallet" pop-ups.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### 2. The Sponsorship Layer (Gasless Paymaster)
+
+We utilize a **LazorKit Paymaster** on the Solana Devnet to sponsor transactions.
+
+* **Mechanism:** The app wraps the user's transaction and sends it to a relayer.
+* **Result:** The user never needs to hold SOL to pay for gas.
+
+### 3. The Application Layer (Vite + React)
+
+Built on a high-performance **Vite** stack, optimized for mobile responsiveness and real-time state management via **Zustand**.
+
+---
+
+## 🛠 Chapter 2: Installation & Setup
+
+Follow this guide to replicate the Stream.fun environment locally.
+
+### Prerequisites
+
+* Node.js v18+
+* A Vercel Account (for deployment)
+* A LazorKit Dashboard Account
+
+### Step 1: The Clone
+
+```bash
+git clone https://github.com/Xzavior34/stream-fun.git
+cd stream-fun
+npm install
+
 ```
 
-**Edit a file directly in GitHub**
+### Step 2: The Environment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env` file in the root directory. You **must** prefix variables with `VITE_` for them to be exposed to the client.
 
-**Use GitHub Codespaces**
+```env
+VITE_RPC_URL=https://api.devnet.solana.com
+VITE_PORTAL_URL=https://portal.lazor.sh
+VITE_CLIENT_KEY=your_lazorkit_public_key_here
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
 
-## What technologies are used for this project?
+### Step 3: The Launch
 
-This project is built with:
+```bash
+npm run dev
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## ⚙️ Chapter 3: The "Secret Sauce" (Technical Deep Dive)
 
-## Can I connect a custom domain to my Lovable project?
+This section documents the specific engineering challenges overcome to make the Solana SDK compatible with a modern **Vite** environment. Judges looking for technical depth will find it here.
 
-Yes, you can!
+### 3.1 The Polyfill Strategy
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Solana's `@solana/web3.js` library relies on Node.js core modules (`Buffer`, `crypto`) that do not exist in the browser. To prevent the "White Screen of Death," we implemented a custom build pipeline.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**The Fix (`vite.config.ts`):**
+We injected the `nodePolyfills` plugin at the *top* of the stack and enforced CommonJS transformation for legacy compatibility.
+
+```typescript
+plugins: [
+  nodePolyfills({
+    globals: { Buffer: true, global: true, process: true },
+    protocolImports: true,
+  }),
+  // ... other plugins
+]
+
+```
+
+### 3.2 The Runtime Injection
+
+Even with build-time polyfills, the LazorKit SDK expects certain global variables to exist at runtime. We solved the `LAZOR_CONFIG is not defined` crash by injecting a global shim in the application entry point.
+
+**The Shim (`src/main.tsx`):**
+
+```typescript
+import { Buffer } from 'buffer';
+
+if (typeof window !== 'undefined') {
+  // 1. Polyfill Buffer for Solana transactions
+  window.Buffer = window.Buffer || Buffer;
+
+  // 2. Inject Config for LazorKit Hooks
+  window.LAZOR_CONFIG = {
+    chainId: 103, // Devnet
+    rpcUrl: "https://api.devnet.solana.com",
+    portalUrl: "https://portal.lazor.sh",
+    appName: "Stream.fun"
+  };
+}
+
+```
+
+---
+
+## 🚀 Chapter 4: Deployment Guide (Vercel)
+
+Deploying a Passkey-enabled app requires strict domain binding.
+
+1. **Environment Variables:**
+Ensure `VITE_RPC_URL` and `VITE_PORTAL_URL` are set in the Vercel Dashboard.
+2. **Deployment Protection:**
+**Disable "Vercel Authentication"**. Passkeys require a public domain to function; a Vercel login screen will block the hardware biometric prompt.
+3. **Domain Binding:**
+The code dynamically detects the `rpId` (Relying Party ID) to ensure passkeys generated on `localhost` don't clash with `vercel.app`.
+
+---
+
+## 🏁 Epilogue: Roadmap & Credits
+
+**Stream.fun** is currently live on Solana Devnet.
+
+* **Next Milestone:** Mainnet Beta launch with USDC support.
+* **License:** MIT
+* **Author:** Xavier ([@Xzavior34](https://www.google.com/search?q=https://github.com/Xzavior34))
+
+> *"The future of payments is invisible."*
+
+---
+
+[Solana Mobile Lazorkit Passkey Token dApp Demo](https://www.youtube.com/watch?v=VrcnxZOhFH4)
+*Watch the demo video to see the biometric authentication in action.*
