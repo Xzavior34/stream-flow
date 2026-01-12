@@ -1,8 +1,4 @@
-To secure the **$700 prize**, your README needs to stand out. Instead of a boring technical list, we will structure it as a **"Developer's Handbook"**—a narrative guide that walks the judges through the *why*, the *how*, and the *magic* of your integration.
 
-This format proves you didn't just copy code; you engineered a solution.
-
----
 
 # 📘 Stream.fun: The Developer's Handbook
 
