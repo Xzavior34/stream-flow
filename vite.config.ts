@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
-import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -14,15 +13,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    // Node.js polyfills for Solana/LazorKit SDK compatibility
-    nodePolyfills({
-      include: ['buffer', 'crypto', 'stream', 'util', 'vm', 'process'],
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true,
-      },
-    }),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "icon-192.png", "icon-512.png"],
@@ -62,26 +52,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  define: {
-    'process.env': {},
-    global: 'globalThis',
-  },
-  optimizeDeps: {
-    include: ['buffer', '@solana/web3.js'],
-    esbuildOptions: {
-      define: {
-        global: 'globalThis',
-      },
-    },
-  },
-  build: {
-    rollupOptions: {
-      plugins: [],
-    },
-    commonjsOptions: {
-      transformMixedEsModules: true,
     },
   },
 }));
