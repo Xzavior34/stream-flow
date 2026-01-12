@@ -10,18 +10,6 @@ export const LAZOR_CONFIG = {
   rpId: null as null,
 };
 
-// Generate a realistic Solana wallet address (Base58 format, 32-44 chars)
-export const generateMockWalletAddress = (): string => {
-  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let address = '';
-  // Solana addresses are typically 32-44 characters
-  const length = 43 + Math.floor(Math.random() * 2);
-  for (let i = 0; i < length; i++) {
-    address += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return address;
-};
-
 // Generate unique IDs for mock transactions
 const generateTxId = (): string => {
   const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -41,7 +29,6 @@ export const generateMockLog = (type: 'connect' | 'policy' | 'paymaster' | 'sess
   const blockNum = Math.floor(Math.random() * 1000000) + 280000000;
   const latency = (Math.random() * 8 + 2).toFixed(1);
   const gasAmount = (Math.random() * 0.00001).toFixed(9);
-  const streamAmount = (Math.random() * 0.0001).toFixed(8);
   
   const logs: Record<typeof type, string> = {
     connect: `[${timestamp}] [LazorKit] WebAuthn passkey verified ✓`,
