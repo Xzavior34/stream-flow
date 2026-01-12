@@ -1,9 +1,18 @@
 import { Buffer } from 'buffer';
 
-// ⚠️ CRITICAL: Global Shim for Solana SDK
-// This prevents the "Uncaught ReferenceError: Buffer is not defined" crash
+// 1. ⚠️ Global Shim: Guarantees 'Buffer' exists for the SDK
 if (typeof window !== 'undefined') {
   window.Buffer = window.Buffer || Buffer;
+  
+  // 2. ⚠️ FIX FOR "LAZOR_CONFIG is not defined"
+  // This injects the missing configuration object that your hooks are looking for.
+  // @ts-ignore
+  window.LAZOR_CONFIG = {
+    chainId: 103, // Devnet
+    rpcUrl: "https://api.devnet.solana.com",
+    portalUrl: "https://portal.lazor.sh",
+    appName: "Stream.fun"
+  };
 }
 
 import { createRoot } from "react-dom/client";
