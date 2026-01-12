@@ -1,5 +1,13 @@
+/**
+ * @fileoverview Legacy LazorKit Wallet Hook
+ * @deprecated Use useLazorAuth from '@/hooks/useLazorAuth' instead
+ * @description This hook is maintained for backward compatibility.
+ * New code should use the modular hooks in the /hooks directory.
+ */
+
 import { useState, useCallback, useEffect } from 'react';
-import { LAZOR_CONFIG, generateMockLog, generateMockWalletAddress } from '@/lib/lazor-config';
+import { LAZORKIT_CONFIG, STORAGE_KEYS, generateMockWalletAddress } from '@/constants/lazorkit';
+import { useSessionLogs } from '@/hooks/useSessionLogs';
 
 interface LazorWalletState {
   isConnected: boolean;
