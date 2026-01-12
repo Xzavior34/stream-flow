@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 // Essential for Solana Web3
-import { nodePolyfills } from "vite-plugin-node-polyfills"; 
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -12,10 +12,10 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    // 1. Polyfills must be first to prevent white-screen crashes
+    // 1. Polyfills must be FIRST. This guarantees 'Buffer' exists before any app code runs.
     nodePolyfills({
       globals: {
-        Buffer: true, // Critical for Solana
+        Buffer: true, // Fixes "Buffer is not defined" crash
         global: true,
         process: true,
       },
@@ -51,8 +51,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // 2. Prevent the build from stripping necessary modules in production
+  // 2. Optimization Settings
   optimizeDeps: {
     include: ['buffer', 'process'],
+  },
+  // 3. Build Safety Net (Crucial for Vercel)
+  build: {
+    commonjsOptions: {
+      // Allows Vercel to handle older Solana libraries that use 'require'
+      transformMixedEsModules: true, 
+    },
   },
 }));
