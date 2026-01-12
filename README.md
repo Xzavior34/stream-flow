@@ -150,8 +150,3 @@ The code dynamically detects the `rpId` (Relying Party ID) to ensure passkeys ge
 * **Author:** Xavier ([@Xzavior34](https://www.google.com/search?q=https://github.com/Xzavior34))
 
 > *"The future of payments is invisible."*
-
----
-
-[Solana Mobile Lazorkit Passkey Token dApp Demo](https://www.youtube.com/watch?v=VrcnxZOhFH4)
-*Watch the demo video to see the biometric authentication in action.*
