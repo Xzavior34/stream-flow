@@ -1,5 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+/**
+ * @fileoverview Stream Subscription Hook
+ * @description Manages real-time payment streams to creators with secure wallet authentication.
+ * Uses wallet-authenticated Supabase client for RLS policy compliance.
+ */
+
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createWalletClient } from '@/lib/supabase-wallet';
 import { calculateStreamedAmount, DEFAULT_FLOW_RATE } from '@/lib/stream-utils';
 
 interface StreamSubscription {
@@ -13,7 +19,7 @@ interface StreamSubscription {
 
 interface UseStreamSubscriptionReturn {
   subscriptions: StreamSubscription[];
-  activeStreams: Map<string, number>; // creator_id -> current streamed amount
+  activeStreams: Map<string, number>;
   isLoading: boolean;
   subscribe: (creatorId: string, flowRate?: number) => Promise<void>;
   unsubscribe: (creatorId: string) => Promise<void>;
@@ -22,15 +28,27 @@ interface UseStreamSubscriptionReturn {
   totalStreaming: number;
 }
 
+/**
+ * Hook for managing stream subscriptions with wallet authentication
+ * 
+ * @param walletAddress - The connected wallet address for authentication
+ * @returns Stream subscription state and methods
+ */
 export const useStreamSubscription = (walletAddress: string | null): UseStreamSubscriptionReturn => {
   const [subscriptions, setSubscriptions] = useState<StreamSubscription[]>([]);
   const [activeStreams, setActiveStreams] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Create wallet-authenticated Supabase client
+  const supabase = useMemo(() => {
+    if (!walletAddress) return null;
+    return createWalletClient(walletAddress);
+  }, [walletAddress]);
+
   // Fetch existing subscriptions for this wallet
   useEffect(() => {
-    if (!walletAddress) {
+    if (!walletAddress || !supabase) {
       setSubscriptions([]);
       setActiveStreams(new Map());
       return;
@@ -55,7 +73,7 @@ export const useStreamSubscription = (walletAddress: string | null): UseStreamSu
     };
 
     fetchSubscriptions();
-  }, [walletAddress]);
+  }, [walletAddress, supabase]);
 
   // Update stream amounts every 100ms for smooth animation
   useEffect(() => {
@@ -78,10 +96,7 @@ export const useStreamSubscription = (walletAddress: string | null): UseStreamSu
       setActiveStreams(newStreams);
     };
 
-    // Initial update
     updateStreams();
-
-    // Set up interval for continuous updates
     intervalRef.current = setInterval(updateStreams, 100);
 
     return () => {
@@ -92,7 +107,7 @@ export const useStreamSubscription = (walletAddress: string | null): UseStreamSu
   }, [subscriptions]);
 
   const subscribe = useCallback(async (creatorId: string, flowRate = DEFAULT_FLOW_RATE) => {
-    if (!walletAddress) return;
+    if (!walletAddress || !supabase) return;
 
     try {
       const { data, error } = await supabase
@@ -120,13 +135,12 @@ export const useStreamSubscription = (walletAddress: string | null): UseStreamSu
       console.error('Error subscribing:', error);
       throw error;
     }
-  }, [walletAddress]);
+  }, [walletAddress, supabase]);
 
   const unsubscribe = useCallback(async (creatorId: string) => {
-    if (!walletAddress) return;
+    if (!walletAddress || !supabase) return;
 
     try {
-      const currentSub = subscriptions.find(s => s.creator_id === creatorId);
       const currentAmount = activeStreams.get(creatorId) || 0;
 
       const { error } = await supabase
@@ -150,7 +164,7 @@ export const useStreamSubscription = (walletAddress: string | null): UseStreamSu
       console.error('Error unsubscribing:', error);
       throw error;
     }
-  }, [walletAddress, subscriptions, activeStreams]);
+  }, [walletAddress, supabase, activeStreams]);
 
   const getStreamAmount = useCallback((creatorId: string): number => {
     return activeStreams.get(creatorId) || 0;
