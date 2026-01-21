@@ -9,20 +9,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { LAZORKIT_CONFIG, STORAGE_KEYS, generateMockWalletAddress } from '@/constants/lazorkit';
 import { useSessionLogs } from '@/hooks/useSessionLogs';
 
-// --- FIXED: Added the missing helper function to prevent ReferenceError ---
-const generateMockLog = (type: string) => {
-  const timestamp = new Date().toLocaleTimeString();
-  const messages: Record<string, string> = {
-    connect: `🟢 Wallet connected successfully`,
-    policy: `📜 Policy verification passed`,
-    paymaster: `⛽ Paymaster sponsored gas fees`,
-    session: `🔑 Session key authorized`,
-    tx: `💸 Transaction confirmed`
-  };
-  return `[${timestamp}] ${messages[type] || type}`;
-};
-// -------------------------------------------------------------------------
-
 interface LazorWalletState {
   isConnected: boolean;
   isConnecting: boolean;
@@ -50,7 +36,6 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
   const [logs, setLogs] = useState<string[]>([]);
 
   const addLog = useCallback((type: 'connect' | 'policy' | 'paymaster' | 'session' | 'tx') => {
-    // This line was crashing before because generateMockLog didn't exist. Now it works.
     const log = generateMockLog(type);
     setLogs(prev => [...prev.slice(-50), log]);
   }, []);
@@ -81,14 +66,11 @@ export const useLazorWallet = (): UseLazorWalletReturn => {
   const connect = useCallback(async () => {
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
     
-    // Safety check for LAZOR_CONFIG availability to prevent undefined errors
-    const rpcUrl = (window as any).LAZOR_CONFIG?.rpcUrl || "https://api.devnet.solana.com";
-
     console.log('[LazorKit] Initiating WebAuthn passkey authentication...');
     console.log('[LazorKit] Config:', { 
-      rpcUrl: rpcUrl,
+      rpcUrl: LAZOR_CONFIG.rpcUrl,
       rpId: window.location.hostname,
-      network: 'devnet' 
+      network: LAZOR_CONFIG.network 
     });
     
     try {

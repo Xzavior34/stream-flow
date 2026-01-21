@@ -105,7 +105,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_request_wallet: { Args: never; Returns: string }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
