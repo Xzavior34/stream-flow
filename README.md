@@ -1,6 +1,6 @@
 # live demo : https://stream-flow-nine.vercel.app/
 
-# 📘 Stream.fun: The Developer's Handbook
+# 📘 Stream.fun: The Developer's Handbook.
 
 > **A Reference Implementation for Next-Gen Solana Payments**
 
